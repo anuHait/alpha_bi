@@ -7,11 +7,14 @@ import { signOut } from "firebase/auth";
 
 export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
-
+  const [search, setSearch] = useState("");
+  const[gif,setGif]=useState([]);
   const handleFocus = () => {
     setIsFocused(true);
   };
+  const handleClick=()=>{
 
+  }
   const [input, setInput] = useState("");
   const [user] = useAuthState(auth);
   const userSession = sessionStorage.getItem("user");
@@ -43,9 +46,14 @@ export default function Home() {
           <div className="flex flex-row gap-3 m-5">
             <input
               type="text"
+              id="search"
+              value={search}
               className={` flex-1 h-full p-5 bg-gray-200 rounded-lg w-[90%]`}
               placeholder="Search..."
               onFocus={handleFocus}
+              onChange={(e) => {
+                setSearch(e.target.value);
+              }}
             />
             <button
               className={`bg-black text-white font-semibold py-2 px-4  rounded-lg`}

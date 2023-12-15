@@ -1,6 +1,6 @@
 "use client";
 import {useState} from 'react'
-import {useCreateUserWithEmailAndPassword} from 'react-firebase-hooks/auth';
+import {useSignInWithEmailAndPassword} from 'react-firebase-hooks/auth';
 import {auth} from '@/app/services/firebase';
 import {useRouter} from 'next/navigation';
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import Link from 'next/link';
 function Page() {
     const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [signInWithEmailAndPassword]=useCreateUserWithEmailAndPassword(auth);
+  const [signInWithEmailAndPassword]=useSignInWithEmailAndPassword(auth);
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
@@ -24,10 +24,13 @@ function Page() {
         console.log({email,password});
         const res=await signInWithEmailAndPassword(email,password);
         console.log({res});
-        sessionStorage.setItem('user',true);
+        if(res){
+          sessionStorage.setItem('user',true);
         setEmail('');
         setPassword('');
         router.push('/');
+        }
+        
     }catch(error){
         console.error('Error during sign-up:', error);
     }
