@@ -1,23 +1,24 @@
-"use client";
-import { useState } from "react";
+"use client"
+import { useState ,useEffect} from "react";
 import { useAuthState } from "react-firebase-hooks/auth";
 import { auth } from "@/app/services/firebase";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import axios from "axios";
-import { FaSearch } from "react-icons/fa";
-import { FaStar } from "react-icons/fa";
+import { FaSearch, FaStar } from "react-icons/fa";
+import { ClipLoader } from "react-spinners"; // Import ClipLoader from react-spinners
 
 export default function Home() {
   const [isFocused, setIsFocused] = useState(false);
   const [query, setQuery] = useState("");
-  const[gif,setGif]=useState([]);
+  const [gif, setGif] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-  //const [totalPages, setTotalPages] = useState(0);
-  //const dataPerPage=3;
+  const [loading, setLoading] = useState(false);
+
   const handleFocus = () => {
     setIsFocused(true);
   };
+
   const goToPage = (page) => {
     setCurrentPage(page);
   };
@@ -33,8 +34,10 @@ export default function Home() {
       setCurrentPage((prevPage) => prevPage - 1);
     }
   };
+
   const handleClick = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const response = await axios.get(`https://api.giphy.com/v1/gifs/search`, {
         params: {
@@ -43,28 +46,37 @@ export default function Home() {
           limit: 10,
         },
       });
-      setGif(response.data.data); 
-      //setTotalPages(Math.ceil(response.data.pagination.total_count / recordsPerPage));
+      setGif(response.data.data);
     } catch (error) {
       console.error('Error during loading', error);
+    } finally {
+      setLoading(false);
     }
   };
-  console.log({ gif });
+
   const recordsPerPage = 3;
   const lastIndex = currentPage * recordsPerPage;
   const firstIndex = lastIndex - recordsPerPage;
   const totalPages = Math.ceil(gif?.length / recordsPerPage);
   const pageNumbers = totalPages > 0 ? [...Array(totalPages)].map((_, index) => index + 1) : [];
-  
-    const [user] = useAuthState(auth);
-    let userSession;
-   if(typeof window !=='undefined')
-    userSession = sessionStorage.getItem("user");
-  console.log({ user });
+
+  const [user] = useAuthState(auth);
+  let userSession;
+  if (typeof window !== 'undefined') userSession = sessionStorage.getItem("user");
   const router = useRouter();
   if (!user && !userSession) {
     router.push("/signin");
   }
+
+  useEffect(() => {
+    // Redirect to signin if not authenticated
+    if (!user && !userSession) {
+      // If window is defined, redirect
+      if (typeof window !== 'undefined') {
+        window.location.href = "/signin";
+      }
+    }
+  }, [user, userSession]);
   return (
     <div className={`p-8 flex  flex-col items-center justify-center`}>
       <button
@@ -73,7 +85,8 @@ export default function Home() {
           signOut(auth);
           if (typeof window !== 'undefined') {
             window.sessionStorage.removeItem("user");
-          }        }}
+          }
+        }}
       >
         Log out
       </button>
@@ -86,86 +99,92 @@ export default function Home() {
       >
         <div className="">
           <div className="flex flex-row gap-3 m-5">
-          <div className="flex flex-row gap-1 items-center justify-center w-[90%] bg-gray-200 rounded-lg">
-            <FaSearch className="text-xl ml-2 " />
-            <input
-              type="text"
-              id="query"
-              value={query}
-              className={` flex-1 h-full p-5 bg-gray-200 rounded-lg outline-none`}
-              placeholder="Article name or keyword..."
-              onFocus={handleFocus}
-              onChange={(e) => {
-                setQuery(e.target.value);
-              }}
-            />
+            <div className="flex flex-row gap-1 items-center justify-center w-[90%] bg-gray-200 rounded-lg">
+              <FaSearch className="text-xl ml-2 " />
+              <input
+                type="text"
+                id="query"
+                value={query}
+                className={` flex-1 h-full p-5 bg-gray-200 rounded-lg outline-none`}
+                placeholder="Article name or keyword..."
+                onFocus={handleFocus}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                }}
+              />
             </div>
             <button
               className={`bg-black text-white font-semibold py-2 px-4  rounded-lg`}
-            onClick={(e)=>{handleClick(e)}}>
+              onClick={(e) => { handleClick(e) }}
+            >
               query
             </button>
           </div>
         </div>
         <div className="flex flex-row gap-3 items-center justify-center">
-        {gif?.slice(firstIndex, lastIndex).map((item, index) => {
-          const itemIndex = index + firstIndex + 1;
-          return (
-            <div key={itemIndex} className="flex flex-col gap-2 items-center rounded-lg justify-center m-5">
-              <img src={item.images.fixed_height.url} alt={item.title} className="rounded-lg h-56" />
-              <div className="flex flex-row items-center justify-between">
-              <div>
-              <p className="font-semibold text-lg ">{item?.user?.display_name}</p>
-              <p className="font-semibold text-md text-gray-700">@{item?.user?.username}</p>
-              </div>
-              <FaStar className="text-xl hover:text-yellow-400 text-gray-400" />
-            </div>
-            </div>
-          );
-        }
-        )
-      }
+          {loading ? (
+            <div className="m-20">
+            <ClipLoader color={"#666"} loading={true} size={60} />
+            </div> // Set color to grey
+          ) : (
+            gif?.slice(firstIndex, lastIndex).map((item, index) => {
+              const itemIndex = index + firstIndex + 1;
+              return (
+                <div key={itemIndex} className="flex flex-col gap-2 items-center rounded-lg justify-center m-5">
+                  <img src={item.images.fixed_height.url} alt={item.title} className="rounded-lg h-56" />
+                  <div className="flex flex-row justify-between items-center w-full">
+                    <div className="flex flex-col">
+                      <p className="font-semibold text-lg">{item?.user?.display_name}</p>
+                      <p className="font-semibold text-md text-gray-700">@{item?.user?.username}</p>
+                    </div>
+                    <FaStar className="text-xl hover:text-yellow-400 text-gray-400" />
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
-        {
-          gif.length>0?(
-            <nav className="flex justify-center mt-4 mb-20">
-          <ul className="flex">
-            <li>
-              <button
-                onClick={goToPrevPage}
-                disabled={currentPage === 1}
-                className="px-2 py-1 mr-2 border-none font-semibold"
-              >
-                Previous
-              </button>
-            </li>
-            {pageNumbers.map((page) => (
-              <li key={page}>
+        {gif.length > 0 ? (
+          <nav className="flex justify-center mt-4 mb-20">
+            <ul className="flex">
+              <li>
                 <button
-                  onClick={() => goToPage(page)}
-                  className={`px-2 py-1 mx-1  rounded-sm ${
-                    page === currentPage ? 'bg-pink-100 border-b-4 border-pink-400' : ''
-                  }`}
+                  onClick={goToPrevPage}
+                  disabled={currentPage === 1}
+                  className="px-2 py-1 mr-2 border-none font-semibold"
                 >
-                  {page}
+                  Previous
                 </button>
               </li>
-            ))}
-            <li>
-              <button
-                onClick={goToNextPage}
-                disabled={currentPage === totalPages}
-                className="px-2 py-1 ml-2 font-semibold border-none"
-              >
-                Next
-              </button>
-            </li>
-          </ul>
-        </nav>
-          ):(<div></div>)
-        }
-      
+              {pageNumbers.map((page) => (
+                <li key={page}>
+                  <button
+                    onClick={() => goToPage(page)}
+                    className={`px-2 py-1 mx-1  rounded-sm ${
+                      page === currentPage ? 'bg-pink-100 border-b-4 border-pink-400' : ''
+                    }`}
+                  >
+                    {page}
+                  </button>
+                </li>
+              ))}
+              <li>
+                <button
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="px-2 py-1 ml-2 font-semibold border-none"
+                >
+                  Next
+                </button>
+              </li>
+            </ul>
+          </nav>
+        ) : (
+          <div></div>
+        )}
       </div>
     </div>
   );
 }
+
+
