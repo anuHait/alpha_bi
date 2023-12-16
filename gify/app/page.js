@@ -57,7 +57,9 @@ export default function Home() {
   const pageNumbers = totalPages > 0 ? [...Array(totalPages)].map((_, index) => index + 1) : [];
   
     const [user] = useAuthState(auth);
-  const userSession = sessionStorage.getItem("user");
+    let userSession;
+   if(typeof window !=='undefined')
+    userSession = sessionStorage.getItem("user");
   console.log({ user });
   const router = useRouter();
   if (!user && !userSession) {
