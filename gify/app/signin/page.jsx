@@ -2,7 +2,7 @@
 import {useState} from 'react'
 import {useSignInWithEmailAndPassword} from 'react-firebase-hooks/auth';
 import {auth} from '@/app/services/firebase';
-import {useRouter} from 'next/navigation';
+import { useRouter } from 'next/navigation'; // Change the import statement
 import Link from 'next/link';
 
 function Page() {
@@ -29,8 +29,9 @@ function Page() {
           sessionStorage.setItem('user',true);
         setEmail('');
         setPassword('');
-        router.push('/');
-        }
+        if (typeof window !== 'undefined') {
+          window.location.href = '/';
+        }        }
         
     }catch(error){
         console.error('Error during sign-up:', error);
