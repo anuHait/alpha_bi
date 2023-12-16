@@ -22,6 +22,7 @@ const SignUp = () => {
         console.log({email,password});
         const res=await createUserWithEmailAndPassword(email,password);
         console.log({res});
+        if(typeof window !=='undefined')
         sessionStorage.setItem('user',true);
         router.push('/');
         setEmail('');
